@@ -11,17 +11,22 @@ It requires Prism to be installed in-game and connects to its MySQL database (re
 
 Panoptès backend is built with Rust nightly and [Rocket 5.0-dev](https://rocket.rs/master/).
 
-### Installation
+### Install
 
 1. Install Rust nightly using [rustup](https://rustup.rs).
 2. Create a file named `Panoptes.toml` at the root of the repository, following the template below. At least, add a
    database DSN.
-2. ```make run-back```
+
+### Start
+
+```
+make run-back
+```
 
 The first run will be slow to start, as everything needs to be downloaded and compiled. Subsequent runs will be way
 faster.
 
-#### Configuration
+### Configure
 
 To configure Panoptès, you can create a `Panoptes.toml` file with the following content (all parts are optional;
 only add the ones you want to override). Default values can be found in the `back/Rocket.toml` file. You can set
@@ -47,6 +52,6 @@ You can also use environment variables, the content being a TOML string, e.g. to
 PANOPTES_DATABASES='{prism={url="mysql://dsn"}}' 
 ```
 
-#### Documentation
+### Read (the manual)
 
 API documentation is available at the `/` endpoint.
