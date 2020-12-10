@@ -1,0 +1,9 @@
+[global.areas]
+
+old = { name = "Ancienne banque", world = "V5", pos1 = [0, 0, 0], pos2 = [400, 256, 800] }
+spawn = { name = "Auberge du spawn", world = "V5", pos1 = [-2100, 0, -19000], pos2 = [-2000, 80, -19200] }
+
+[global.databases.prism]
+
+url = "***"
+pool_size = 2
