@@ -9,8 +9,8 @@ mod area;
 mod config;
 mod output;
 
+use figment::{Figment, providers::{Format, Toml, Env}};
 use rocket::fairing::AdHoc;
-use rocket::figment::Figment;
 use rocket::State;
 use rocket_contrib::databases::mysql;
 use rocket_contrib::databases::mysql::prelude::*;
@@ -29,7 +29,7 @@ struct PrismDatabase(mysql::Conn);
 #[get("/")]
 fn index() -> &'static str {
     "
-    ZCRAFT 1984 API DOCS
+    PANOPTÈS API DOCS
 
         GET /
 
@@ -79,7 +79,12 @@ async fn players(filter: Option<String>, db: PrismDatabase) -> Result<Json<Vec<P
 
 #[launch]
 fn rocket() -> rocket::Rocket {
-    rocket::ignite()
+    let figment = rocket::Config::figment()
+        .merge(Toml::file("Panoptes.toml").nested())
+        .merge(Toml::file(Env::var_or("PANOPTES_CONFIG", "../Panoptes.toml")).nested())
+        .merge(Env::prefixed("PANOPTES_").global());
+
+    rocket::custom(figment)
         .mount("/", routes![index, areas, players])
         .attach(AdHoc::on_attach("Areas Configuration", |rocket| async {
             let figment: &Figment = rocket.figment();

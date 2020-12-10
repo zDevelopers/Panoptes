@@ -385,6 +385,7 @@ checksum = "b13e2d266426f89e45fc544117ade84fad2a58ff676f34cc34e123fe4391b856"
 dependencies = [
  "pear",
  "serde",
+ "serde_json",
  "toml",
  "uncased",
  "version_check",
@@ -1113,6 +1114,7 @@ dependencies = [
 name = "panoptes-back"
 version = "0.1.0"
 dependencies = [
+ "figment",
  "mysql",
  "rocket",
  "rocket_contrib",

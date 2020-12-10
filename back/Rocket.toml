@@ -5,5 +5,4 @@ spawn = { name = "Auberge du spawn", world = "V5", pos1 = [-2100, 0, -19000], po
 
 [global.databases.prism]
 
-url = "***"
 pool_size = 2
