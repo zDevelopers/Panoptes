@@ -127,9 +127,6 @@ fn rocket() -> rocket::Rocket {
         .merge(Toml::file(Env::var_or("PANOPTES_CONFIG", "../Panoptes.toml")).nested())
         .merge(Env::prefixed("PANOPTES_").global());
 
-    let cors_config: CorsConfig = figment.extract().expect("Missing or invalid CORS configuration");
-    let cors = cors_config.cors;
-
     rocket::custom(figment)
         .mount("/", routes![index, areas, players])
         .attach(AdHoc::on_attach("Areas Configuration", |rocket| async {
@@ -146,9 +143,11 @@ fn rocket() -> rocket::Rocket {
 
             Ok(rocket.manage(areas))
         }))
+        .attach(AdHoc::config::<CorsConfig>())
         .attach(PrismDatabase::fairing())
         .attach(SpaceHelmet::default())
-        .attach(AdHoc::on_response("CORS header", |_, res| Box::pin(async move {
-            res.set_header(Header::new("Access-Control-Allow-Origin", "*"));
+        .attach(AdHoc::on_response("CORS header", |req, res| Box::pin(async move {
+            let cors_config = req.guard::<rocket::State<'_, CorsConfig>>().await.expect("CorsConfig state not attached");
+            res.set_header(Header::new("Access-Control-Allow-Origin", cors_config.cors.clone()));
         })))
 }
