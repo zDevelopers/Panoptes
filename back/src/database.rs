@@ -1,8 +1,14 @@
+use std::collections::HashMap;
+
+use itertools::Itertools;
 use mysql::prelude::*;
 use mysql::{Conn, Error};
-
 use serde::Serialize;
 use uuid::Uuid;
+
+use crate::params::Uuids;
+use crate::area::Area;
+
 
 #[derive(Serialize, Debug, Clone)]
 pub struct Player {
@@ -10,7 +16,7 @@ pub struct Player {
     pub uuid: Uuid
 }
 
-pub fn query_recent_players(c: &mut mysql::Conn, filter: String) -> Result<Vec<Player>, Error> {
+pub fn query_recent_players(c: &mut Conn, filter: String) -> Result<Vec<Player>, Error> {
     let stmt = c.prep("
         SELECT
             p.player AS name,
@@ -59,4 +65,55 @@ pub fn query_recent_players(c: &mut mysql::Conn, filter: String) -> Result<Vec<P
             uuid: Uuid::parse_str(uuid.as_str()).unwrap_or(Uuid::nil())
         }
     )
+}
+
+
+#[derive(Serialize, Debug, Clone)]
+pub struct Ratios {
+    pub global: i64,
+    pub detail: HashMap<String, i64>
+}
+
+pub fn query_ratios(c: &mut Conn, areas: Vec<Area>, players: Uuids) -> Result<Ratios, Error> {
+    let areas_where_clause: String = areas
+        .iter()
+        .map(|a| format!("({})\n", a.as_sql()))
+        .intersperse(String::from(" OR "))
+        .collect();
+    let players_where_clause: String = players.as_sql();
+    let sql = format!(
+        "
+        SELECT material, SUM(amount_diff) AS ratio
+        FROM (
+             SELECT
+                    b.material AS material,
+                    IF(action = 'item-insert', 1, -1) * JSON_EXTRACT(e.data, '$.amt') AS amount_diff
+            FROM prism_data d
+            LEFT JOIN prism_actions a ON a.action_id = d.action_id
+            LEFT JOIN prism_players p ON p.player_id = d.player_id
+            LEFT JOIN prism_worlds w ON w.world_id = d.world_id
+            LEFT JOIN prism_id_map b ON b.block_id = d.block_id
+            LEFT JOIN prism_data_extra e ON e.data_id = d.id
+            WHERE a.action IN ('item-insert', 'item-remove')
+                AND ({})
+                AND ({})
+        ) history
+        GROUP BY material
+        ORDER BY ratio;
+        ",
+        areas_where_clause,
+        players_where_clause
+    );
+
+    println!("{}", sql);
+
+    let ratios: HashMap<String, i64> = c.query_map(
+        sql,
+        |(material, amount_diff): (String, i64)| (material, amount_diff)
+    )?.into_iter().collect();
+
+    Ok(Ratios {
+        global: ratios.iter().map(|(_, ratio)| ratio).sum(),
+        detail: ratios
+    })
 }
