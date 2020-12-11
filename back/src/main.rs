@@ -19,7 +19,7 @@ use rocket_contrib::helmet::SpaceHelmet;
 use rocket_contrib::json::{Json, JsonValue};
 use uuid::Uuid;
 
-use crate::area::Areas;
+use crate::area::{Area, Areas};
 use crate::config::{Config, CorsConfig};
 use crate::database::{Player, query_recent_players};
 
@@ -59,8 +59,8 @@ fn index() -> &'static str {
 
 
 #[get("/areas")]
-fn areas(areas: State<Areas>) -> Json<Areas>{
-    Json(areas.inner().clone())
+fn areas(areas: State<Areas>) -> Json<Vec<Area>>{
+    Json(areas.inner().clone().into())
 }
 
 

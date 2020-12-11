@@ -16,6 +16,12 @@ impl From<Config> for Areas {
     }
 }
 
+impl From<Areas> for Vec<Area> {
+    fn from(areas: Areas) -> Self {
+        areas.areas.iter().map(|(_, area)| area.clone()).collect()
+    }
+}
+
 #[derive(Serialize, Debug, Clone)]
 pub(crate) struct Area {
     pub id: String,
