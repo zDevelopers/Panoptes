@@ -3,10 +3,10 @@
     <v-container>
       <v-row>
         <v-col>
-          <PlayerFilter v-model="players"></PlayerFilter>
+          <PlayerFilter :value="players" @input="emitPropChange('players', $event)"></PlayerFilter>
         </v-col>
         <v-col>
-          <AreaFilter v-model="areas" ></AreaFilter>
+          <AreaFilter :value="areas" @input="emitPropChange('areas', $event)"></AreaFilter>
         </v-col>
       </v-row>
     </v-container>
@@ -19,30 +19,15 @@ import PlayerFilter from "@/components/filters/PlayerFilter";
 import AreaFilter from "@/components/filters/AreaFilter";
 export default {
   name: "PlayerStatsFilter",
-  props: ['value'],
+  props: {
+    players: { default: () => ([]) },
+    areas: { default: () => ([]) },
+  },
   components: {AreaFilter, PlayerFilter},
-  data: () => ({
-  }),
-  computed: {
-    players: {
-      get() {
-        return this.value.players ? this.value.players : [];
-      },
-      set(val) {
-        this.$emit('input', {players: val, areas: this.areas});
-      }
-    },
-    areas: {
-      get() {
-        return this.value.areas ? this.value.areas : [];
-      },
-      set(val) {
-        this.$emit('input', {players: this.players, areas: val});
-      }
-    },
-    filter: function()
+  methods: {
+    emitPropChange(propName, value)
     {
-      return {players: this.players, areas: this.areas};
+      this.$emit(`update:${propName}`, value);
     }
   }
 }

@@ -1,5 +1,6 @@
 <template>
-  <v-autocomplete :loading="loading" :items="items" cache-items :search-input.sync="textSearch" v-model="player" multiple label="Joueurs"></v-autocomplete>
+  <v-autocomplete :loading="loading" :items="items" cache-items :search-input.sync="textSearch"
+                  v-model="player" multiple label="Joueurs"></v-autocomplete>
 </template>
 
 <script>

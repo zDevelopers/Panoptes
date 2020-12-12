@@ -4,7 +4,7 @@
       <v-container>
         <v-row>
           <v-col cols="10">
-            <PlayerStatsFilter v-model="statsFilter"></PlayerStatsFilter>
+            <PlayerStatsFilter :players.sync="statsFilter.players" :areas.sync="statsFilter.areas"></PlayerStatsFilter>
           </v-col>
           <v-col cols="2" align-self="center">
             <v-btn @click="onClickFilter" :disabled="!isPlayersNotEmpty">Filtrer</v-btn>
@@ -70,6 +70,8 @@ export default {
   methods: {
     onClickFilter: function()
     {
+      console.log(this.statsFilter);
+      this.statsFilter.areas.push('spawn');
       if(this.statsFilter.players.length > 0)
       {
         this.refreshRatio();
