@@ -55,3 +55,27 @@ PANOPTES_DATABASES='{prism={url="mysql://dsn"}}'
 ### Read (the manual)
 
 API documentation is available at the `/` endpoint.
+
+## Frontend
+
+### Install (dependencies)
+```
+npm install
+```
+
+### Configure
+Create .env.local with the following parameter
+```
+VUE_APP_API_URL=[backend url]
+```
+
+### Start
+#### Development
+```
+npm run serve
+```
+
+#### Production
+```
+npm run build
+```
