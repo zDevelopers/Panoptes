@@ -7,12 +7,12 @@
             <PlayerStatsFilter v-model="statsFilter"></PlayerStatsFilter>
           </v-col>
           <v-col cols="2" align-self="center">
-            <v-btn @click="onClickFilter">Filtrer</v-btn>
+            <v-btn @click="onClickFilter" :disabled="!isPlayersNotEmpty">Filtrer</v-btn>
           </v-col>
         </v-row>
-        <v-row>
+        <v-row v-if="dataStats.length > 0 || loading">
           <v-col>
-            <v-data-table no-data-text='Veuillez renseigner les filtres et cliquer sur "Filtrer"'
+            <v-data-table :loading="loading" no-data-text='Veuillez renseigner les filtres et cliquer sur "Filtrer"'
                           :items="dataStats" :headers="headers">
 
             </v-data-table>
@@ -35,9 +35,14 @@ export default {
   data: () => ({
     statsFilter: {players: [], areas: []},
     dataStats: [],
-    globalPlayerCount: null
+    globalPlayerCount: null,
+    loading: false
   }),
   computed: {
+    isPlayersNotEmpty: function()
+    {
+      return this.statsFilter.players.length > 0;
+    },
     headers: function()
     {
       return [
@@ -57,7 +62,8 @@ export default {
     }
   },
   watch: {
-    statsFilter: function() {
+    statsFilter: function()
+    {
       this.resetRatio();
     }
   },
@@ -68,11 +74,6 @@ export default {
       {
         this.refreshRatio();
       }
-      else
-      {
-        this.$store.commit("addError", {type: 'error'
-          , description: 'Vous devez sélectionner au moins un joueur pour filtrer.'});
-      }
     },
     resetRatio: function()
     {
@@ -81,8 +82,10 @@ export default {
     },
     refreshRatio: function()
     {
+      this.loading = true;
       ratioApi.getRatio(this.statsFilter.players, this.statsFilter.areas)
-          .then(dataReturned => { this.showRatio(dataReturned.data); })
+          .then(dataReturned =>{ this.showRatio(dataReturned.data); })
+          .finally(() => { this.loading = false; });
     },
     showRatio: function(ratiosData)
     {
