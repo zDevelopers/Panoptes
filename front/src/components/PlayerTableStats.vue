@@ -70,8 +70,6 @@ export default {
   methods: {
     onClickFilter: function()
     {
-      console.log(this.statsFilter);
-      this.statsFilter.areas.push('spawn');
       if(this.statsFilter.players.length > 0)
       {
         this.refreshRatio();
