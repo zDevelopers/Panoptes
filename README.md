@@ -7,26 +7,30 @@ players contributions to in-game shared resources, to check if everyone is playi
 
 It requires Prism to be installed in-game and connects to its MySQL database (read-only) to gather usage statistics.
 
-## Backend
+Panoptès backend is built with Rust nightly and [Rocket 5.0-dev](https://rocket.rs/master/). Its frontend is built
+using VueJS 2 and Vuetify.
 
-Panoptès backend is built with Rust nightly and [Rocket 5.0-dev](https://rocket.rs/master/).
+## Install
 
-### Install
-
-1. Install Rust nightly using [rustup](https://rustup.rs).
-2. Create a file named `Panoptes.toml` at the root of the repository, following the template below. At least, add a
+1. Install Rust nightly using [rustup](https://rustup.rs), and Node 12+.
+2. Run `make install` to install front-end dependencies.
+3. Create a `Panoptes.toml` file at the root of the repository, following the template below. At least, add a
    database DSN.
+4. Create a `front/.env.local` file with the following content. You can also use a real environment variable.
+   ```
+   VUE_APP_API_URL=[backend url]
+   ```
 
-### Start
+## Start
 
 ```
-make run-back
+make run
 ```
 
 The first run will be slow to start, as everything needs to be downloaded and compiled. Subsequent runs will be way
-faster.
+faster. You can use `make start-back` or `make start-front` to only start one part.
 
-### Configure
+## Configure
 
 To configure Panoptès, you can create a `Panoptes.toml` file with the following content (all parts are optional;
 only add the ones you want to override). Default values can be found in the `back/Rocket.toml` file. You can set
@@ -52,30 +56,14 @@ You can also use environment variables, the content being a TOML string, e.g. to
 PANOPTES_DATABASES='{prism={url="mysql://dsn"}}' 
 ```
 
-### Read (the manual)
+## Read (the manual)
 
-API documentation is available at the `/` endpoint.
+API documentation is available at the `/` endpoint of the backend server.
 
-## Frontend
+## Deploy
 
-### Install (dependencies)
-```
-npm install
-```
+TODO, but for the front-end part:
 
-### Configure
-Create .env.local with the following parameter
-```
-VUE_APP_API_URL=[backend url]
-```
-
-### Start
-#### Development
-```
-npm run serve
-```
-
-#### Production
 ```
 npm run build
 ```
