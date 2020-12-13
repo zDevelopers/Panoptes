@@ -7,8 +7,8 @@ use mysql::{Conn, Error};
 use serde::Serialize;
 use uuid::Uuid;
 
-use crate::params::Uuids;
 use crate::area::{Area, cache_key_for_vec_areas};
+use crate::params::Uuids;
 
 
 #[derive(Serialize, Debug, Clone)]
@@ -28,13 +28,13 @@ pub fn query_recent_players(c: &mut Conn, filter: String) -> Result<Vec<Player>,
         SELECT
             p.player AS name,
             HEX(p.player_uuid) AS uuid,
-            (
+            COALESCE((
                SELECT epoch
                FROM prism_data d
                WHERE d.player_id = p.player_id
                ORDER BY epoch DESC
                LIMIT 1
-            ) AS last_action
+            ), 0) AS last_action
         FROM prism_players p
         WHERE
             p.player LIKE :player
