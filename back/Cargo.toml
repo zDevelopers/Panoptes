@@ -5,7 +5,9 @@ authors = ["Amaury Carrade <amaury@carrade.eu>"]
 edition = "2018"
 
 [dependencies]
+cached = "0.22"
 figment = { version = "0.9", features = ["env", "toml", "json"] }
+itertools = "0.9"
 mysql = "18"
 rocket = { git = "https://github.com/SergioBenitez/Rocket" }
 rocket_contrib = { git = "https://github.com/SergioBenitez/Rocket", default-features = false, features = ["json", "uuid", "mysql_pool", "helmet"] }
