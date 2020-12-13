@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use cached::proc_macro::cached;
 use itertools::Itertools;
 use mysql::prelude::*;
 use mysql::{Conn, Error};
@@ -7,7 +8,7 @@ use serde::Serialize;
 use uuid::Uuid;
 
 use crate::params::Uuids;
-use crate::area::Area;
+use crate::area::{Area, cache_key_for_vec_areas};
 
 
 #[derive(Serialize, Debug, Clone)]
@@ -16,6 +17,12 @@ pub struct Player {
     pub uuid: Uuid
 }
 
+#[cached(
+    size=128, time=60,
+    result = true,
+    key = "String",
+    convert = r#"{ filter.clone() }"#
+)]
 pub fn query_recent_players(c: &mut Conn, filter: String) -> Result<Vec<Player>, Error> {
     let stmt = c.prep("
         SELECT
@@ -74,13 +81,19 @@ pub struct Ratios {
     pub detail: HashMap<String, i64>
 }
 
+#[cached(
+    size=128, time=600,
+    result = true,
+    key = "String",
+    convert = r#"{ format!("{}{}", cache_key_for_vec_areas(&areas), players) }"#
+)]
 pub fn query_ratios(c: &mut Conn, areas: Vec<Area>, players: Uuids) -> Result<Ratios, Error> {
     let areas_where_clause: String = areas
         .iter()
-        .map(|a| format!("({})\n", a.as_sql()))
+        .map(|a| format!("({})", a.as_sql()))
         .intersperse(String::from(" OR "))
         .collect();
-    let players_where_clause: String = players.as_sql();
+    let players_where_clause = players.as_sql();
     let sql = format!(
         "
         SELECT material, SUM(amount_diff) AS ratio
@@ -104,8 +117,6 @@ pub fn query_ratios(c: &mut Conn, areas: Vec<Area>, players: Uuids) -> Result<Ra
         areas_where_clause,
         players_where_clause
     );
-
-    println!("{}", sql);
 
     let ratios: HashMap<String, i64> = c.query_map(
         sql,

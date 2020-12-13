@@ -1,5 +1,6 @@
 #![feature(proc_macro_hygiene, decl_macro)]
 
+extern crate cached;
 #[macro_use] extern crate mysql;
 #[macro_use] extern crate rocket;
 #[macro_use] extern crate rocket_contrib;
@@ -46,6 +47,8 @@ fn index() -> &'static str {
             Returns a list of recently active players, according to Prism's records.
             Add a `filter` query parameter to filter by username.
 
+            Results are cached for one minute.
+
         GET /ratios?areas=<areas>&players=<players>
 
             Returns the ratio of the given player(s) in the given area(s).
@@ -53,8 +56,7 @@ fn index() -> &'static str {
             `players` is a comma-separated list of UUIDs.
             Data will be aggregated as a whole from all areas and all players.
 
-            Results are cached. Cache information will be available in the response. To force
-            fresh results, add a `fresh` query parameter with any value.
+            Results are cached for ten minutes.
 
         GET /areas
 

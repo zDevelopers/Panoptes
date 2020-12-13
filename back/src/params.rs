@@ -1,9 +1,11 @@
+use std::fmt;
+
 use itertools::Itertools;
 use rocket::http::RawStr;
 use rocket::request::{FromParam, FromFormValue};
 use rocket_contrib::uuid::Uuid;
-use uuid::Uuid as UuidReal;
 
+use uuid::Uuid as UuidReal;
 use crate::area::Areas;
 
 
@@ -62,6 +64,18 @@ pub struct Uuids {
     pub uuids: Vec<Uuid>
 }
 
+impl Uuids {
+
+    /// Generates an SQL WHERE clause to filter for these UUIDs, assuming that the `prism_players`
+    /// table is aliased as `p`.
+    pub fn as_sql(&self) -> String {
+        self.uuids.iter()
+            .map(|uuid| format!("HEX(p.player_uuid) = '{}'", uuid.to_simple().encode_lower(&mut UuidReal::encode_buffer())))
+            .intersperse(String::from(" OR "))
+            .collect()
+    }
+}
+
 impl<'v> FromFormValue<'v> for Uuids {
     type Error = uuid::Error;
 
@@ -79,11 +93,20 @@ impl<'v> FromFormValue<'v> for Uuids {
     }
 }
 
-impl Uuids {
-    pub fn as_sql(&self) -> String {
-        self.uuids.iter()
-            .map(|uuid| format!("HEX(p.player_uuid) = '{}'", uuid.to_simple().encode_lower(&mut UuidReal::encode_buffer())))
-            .intersperse(String::from(" OR "))
-            .collect()
+impl fmt::Display for Uuids {
+
+    /// The formatted version displays simple UUIDs comma-separated, and is used as a cache key.
+    /// For any identical set of UUIDs the output should be the same; that's why UUIDs simple
+    /// representations are sorted.
+    #[inline(always)]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f, "{}",
+            self.uuids.iter()
+                .map(|uuid| format!("{}", uuid.to_simple().encode_lower(&mut UuidReal::encode_buffer())))
+                .sorted()
+                .intersperse(String::from(", "))
+                .collect::<String>()
+        )
     }
 }
