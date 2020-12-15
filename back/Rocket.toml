@@ -1,3 +1,8 @@
+[global.minecraft_translations]
+
+directory = "../translations"
+default_locale = "fr_FR"
+
 [global.areas]
 
 # Coordonnées à affiner

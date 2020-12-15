@@ -20,6 +20,17 @@ using VueJS 2 and Vuetify.
    ```
    VUE_APP_API_URL=[backend url]
    ```
+   
+### Translations support
+
+To enable translations support—allowing the `display_name` key of the `/ratios` endpoint to contain localized data
+according to the `locale` query parameter—you must extract the translation files from an existing Minecraft
+installation, as distributing these files is forbidden.
+
+To do so, execute `make extract-translations`. If it does not work, e.g. because your installation is non-standard,
+see options by executing the underlying script with `--help`. The default locale can be specified in the configuration
+file, alongside the folder where translations are stored (default to the `translations` folder at the root of the
+application).
 
 ## Start
 
@@ -37,6 +48,11 @@ only add the ones you want to override). Default values can be found in the `bac
 in this file [any native Rocket configuration](https://rocket.rs/master/guide/configuration/#overview) too.
 
 ```toml
+[global.minecraft_translations]
+
+directory = "../translations"
+default_locale = "fr_fr"
+
 [global.areas]
 
 # You can add as many areas as you wish in this section

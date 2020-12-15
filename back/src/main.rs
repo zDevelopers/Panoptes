@@ -11,8 +11,10 @@ mod area;
 mod config;
 mod database;
 mod params;
+mod locales;
 
 use figment::{Figment, providers::{Env, Format, Serialized, Toml}};
+use itertools::Itertools;
 use rocket::fairing::AdHoc;
 use rocket::http::Header;
 use rocket::response::status::BadRequest;
@@ -20,10 +22,15 @@ use rocket::State;
 use rocket_contrib::helmet::SpaceHelmet;
 use rocket_contrib::json::{Json, JsonValue};
 
+use rocket::logger::PaintExt;
+
 use crate::area::{Area, Areas};
-use crate::config::{Config, CorsConfig};
+use crate::config::{AreasConfig, CorsConfig, TranslationsConfig};
 use crate::database::{Player, Ratios, query_recent_players, query_ratios};
 use crate::params::{AreasIds, Uuids};
+use crate::locales::{MinecraftLocales, Locale};
+use rocket::yansi::Paint;
+use std::sync::Arc;
 
 
 type Result<T> = std::result::Result<T, BadRequest<Json<JsonValue>>>;
@@ -49,13 +56,15 @@ fn index() -> &'static str {
 
             Results are cached for one minute.
 
-        GET /ratios?areas=<areas>&players=<players>
+        GET /ratios?areas=<areas>&players=<players>&locale=<locale>
 
             Returns the ratio of the given player(s) in the given area(s).
-            `areas` is a comma-separated list of areas. If missing, all areas are searched.
-            `players` is a comma-separated list of UUIDs.
-            Data will be aggregated as a whole from all areas and all players.
+            - `areas` is a comma-separated list of areas. If missing, all areas are searched.
+            - `players` is a comma-separated list of UUIDs.
+            - `locale` is the locale to use for the display names (e.g. “ja_jp” or “ru_ru”). If
+               missing, the app's default locale will be used.
 
+            Data will be aggregated as a whole from all areas and all players.
             Results are cached for ten minutes.
 
         GET /areas
@@ -80,11 +89,11 @@ async fn players(filter: Option<String>, db: PrismDatabase) -> Result<Json<Vec<P
 
 
 #[get("/ratios?<areas>&<players>")]
-async fn ratios(areas: AreasIds, players: Uuids, areas_state: State<'_, Areas>, db: PrismDatabase) -> Result<Json<Ratios>> {
+async fn ratios(areas: AreasIds, players: Uuids, areas_state: State<'_, Areas>, locale: Locale, db: PrismDatabase) -> Result<Json<Ratios>> {
     let areas: Vec<Area> = areas_state.filter(areas).areas.iter().map(|(_, a)| a.clone()).collect();
     match areas.len() {
         0 => Err(BadRequest(Some(Json(json!({ "error": "There are no areas matching your request." }))))),
-        _ => match db.run(|c: &mut mysql::Conn| query_ratios(c, areas, players)).await {
+        _ => match db.run(move |c: &mut mysql::Conn| query_ratios(c, areas, players, Arc::clone(&*locale))).await {
             Ok(ratios) => Ok(Json(ratios)),
             Err(_) => Err(BadRequest(Some(Json(json!({ "error": "Unable to query ratios" })))))
         }
@@ -104,7 +113,7 @@ fn rocket() -> rocket::Rocket {
         .mount("/", routes![index, areas, players, ratios])
         .attach(AdHoc::on_attach("Areas Configuration", |rocket| async {
             let figment: &Figment = rocket.figment();
-            let config: Config = match figment.extract() {
+            let config: AreasConfig = match figment.extract() {
                 Ok(config) => config,
                 Err(e) => {
                     rocket::config::pretty_print_error(e);
@@ -115,6 +124,28 @@ fn rocket() -> rocket::Rocket {
             let areas: Areas = config.into();
 
             Ok(rocket.manage(areas))
+        }))
+        .attach(AdHoc::on_attach("Translations Configuration", |rocket| async {
+            let figment: &Figment = rocket.figment();
+            let config: TranslationsConfig = match figment.extract() {
+                Ok(config) => config,
+                Err(e) => {
+                    rocket::config::pretty_print_error(e);
+                    return Err(rocket);
+                }
+            };
+
+            if let Some(config) = config.minecraft_translations {
+                let locales: MinecraftLocales = config.into();
+
+                println!("{}{}{}", Paint::blue(Paint::emoji("🌍 ")), Paint::magenta("Translations"), Paint::blue(":"));
+                println!("    {} {} {}", Paint::default("=>").bold(), Paint::blue("loaded:"), Paint::default(locales.locales.keys().cloned().intersperse(String::from(", ")).collect::<String>()).bold());
+                println!("    {} {} {}", Paint::default("=>").bold(), Paint::blue("default:"), Paint::default(&locales.default_locale).bold());
+
+                return Ok(rocket.manage(locales));
+            }
+
+            Ok(rocket.manage(MinecraftLocales::empty()))
         }))
         .attach(AdHoc::config::<CorsConfig>())
         .attach(PrismDatabase::fairing())

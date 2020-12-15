@@ -9,3 +9,6 @@ run-back:
 
 run:
 	make -j2 run-back run-front
+
+extract-translations:
+	python scripts/extract_translations.py

@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use cached::proc_macro::cached;
 use itertools::Itertools;
 use mysql::prelude::*;
@@ -9,6 +7,8 @@ use uuid::Uuid;
 
 use crate::area::{Area, cache_key_for_vec_areas};
 use crate::params::Uuids;
+use crate::locales::MinecraftLocale;
+use std::sync::Arc;
 
 
 #[derive(Serialize, Debug, Clone)]
@@ -78,16 +78,23 @@ pub fn query_recent_players(c: &mut Conn, filter: String) -> Result<Vec<Player>,
 #[derive(Serialize, Debug, Clone)]
 pub struct Ratios {
     pub global: i64,
-    pub detail: HashMap<String, i64>
+    pub detail: Vec<Ratio>
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct Ratio {
+    pub id: String,
+    pub display_name: String,
+    pub ratio: i64
 }
 
 #[cached(
     size=128, time=600,
     result = true,
     key = "String",
-    convert = r#"{ format!("{}{}", cache_key_for_vec_areas(&areas), players) }"#
+    convert = r#"{ format!("{}{}{:?}", cache_key_for_vec_areas(&areas), players, (*locale).file) }"#
 )]
-pub fn query_ratios(c: &mut Conn, areas: Vec<Area>, players: Uuids) -> Result<Ratios, Error> {
+pub fn query_ratios(c: &mut Conn, areas: Vec<Area>, players: Uuids, locale: Arc<MinecraftLocale>) -> Result<Ratios, Error> {
     let areas_where_clause: String = areas
         .iter()
         .map(|a| format!("({})", a.as_sql()))
@@ -118,13 +125,19 @@ pub fn query_ratios(c: &mut Conn, areas: Vec<Area>, players: Uuids) -> Result<Ra
         players_where_clause
     );
 
-    let ratios: HashMap<String, i64> = c.query_map(
+    let mut ratios: Vec<Ratio> = c.query_map(
         sql,
-        |(material, amount_diff): (String, i64)| (material, amount_diff)
+        |(material, ratio): (String, i64)| Ratio {
+            id: if material.contains(":") { material.clone() } else { format!("minecraft:{}", material) },
+            display_name: locale.translate(material),
+            ratio
+        }
     )?.into_iter().collect();
 
+    ratios.sort_by_key(|ratio| -ratio.ratio);
+
     Ok(Ratios {
-        global: ratios.iter().map(|(_, ratio)| ratio).sum(),
+        global: ratios.iter().map(|ratio| ratio.ratio).sum(),
         detail: ratios
     })
 }
