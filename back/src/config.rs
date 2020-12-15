@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
+use std::path::PathBuf;
 
 #[derive(Serialize, Deserialize)]
-pub struct Config {
+pub struct AreasConfig {
     pub areas: HashMap<String, ConfigArea>,
 }
 
@@ -13,6 +14,7 @@ pub struct ConfigArea {
     pub pos1: Vec<i64>,
     pub pos2: Vec<i64>,
 }
+
 
 #[derive(Serialize, Deserialize)]
 pub struct CorsConfig {
@@ -25,4 +27,16 @@ impl Default for CorsConfig {
             cors: String::from("*")
         }
     }
+}
+
+
+#[derive(Serialize, Deserialize)]
+pub struct TranslationsConfig {
+    pub minecraft_translations: Option<TranslationsConfigInner>
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct TranslationsConfigInner {
+    pub directory: PathBuf,
+    pub default_locale: String
 }

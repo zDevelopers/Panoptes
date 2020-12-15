@@ -1,5 +1,10 @@
 target
+
+# Configuration file with private data
 Panoptes.toml
+
+# Minecraft translations we're not allowed to distribute
+/translations
 
 /front/.DS_Store
 /front/node_modules

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use itertools::Itertools;
 use serde::Serialize;
 
-use crate::config::{Config, ConfigArea};
+use crate::config::{AreasConfig, ConfigArea};
 
 
 /// All areas declared into the configuration file are stored in this structure, made available
@@ -12,8 +12,8 @@ pub(crate) struct Areas {
     pub areas: HashMap<String, Area>
 }
 
-impl From<Config> for Areas {
-    fn from(config: Config) -> Self {
+impl From<AreasConfig> for Areas {
+    fn from(config: AreasConfig) -> Self {
         Self {
             areas: config.areas.into_iter().map(|(id, area)| (id.clone(), Area::from(id.clone(), area))).collect()
         }
