@@ -58,13 +58,13 @@ if __name__ == "__main__":
         "--minecraft-dir",
         dest="minecraft_dir",
         default=default_minecraft_dir(),
-        help="The Minecraft data directory",
+        help="The Minecraft data directory (default: %(default)s)",
     )
     parser.add_argument(
         "--output-dir",
         dest="output_dir",
         default="translations",
-        help="The output directory, where to place all JSON translation files",
+        help="The output directory, where to place all JSON translation files (default: %(default)s)",
     )
 
     args = parser.parse_args()
@@ -72,4 +72,5 @@ if __name__ == "__main__":
         Path(args.minecraft_dir).expanduser().absolute(),
         Path(args.output_dir).expanduser().absolute(),
     )
+
     print(f"Successfully extracted {files_count} translation files for {version}.")
